@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jaiswal's GreenNest - Order Mushrooms</title>
+<style>
+  body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #ffffff 0%, #50c878 100%);
+    color: #333;
+  }
+  h1 {
+    text-align: center;
+    font-weight: bold;
+    color: #006400;
+    margin: 20px 0;
+  }
+  .container {
+    max-width: 600px;
+    margin: 0 auto 40px auto;
+    padding: 20px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  label {
+    display: block;
+    margin-top: 10px;
+    font-weight: 600;
+  }
+  select, input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 4px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  button {
+    margin-top: 15px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    background: #006400;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    transition: 0.2s;
+  }
+  button:hover { background: #008000; }
+  .disclaimer {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #555;
+    text-align: center;
+  }
+  .popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #50c878;
+    color: white;
+    padding: 30px 20px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    display: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    z-index: 999;
+  }
+  @media(max-width: 640px) {
+    .container { margin: 20px 10px; padding: 15px; }
+    h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<h1>Jaiswal's GreenNest</h1>
+<div class="container">
+  <form id="orderForm">
+    <label>Choose Product:</label>
+    <select id="product" required>
+      <option value="">--Select--</option>
+      <option value="x">Product X</option>
+      <option value="y">Product Y</option>
+      <option value="z">Product Z</option>
+    </select>
+    <label>Choose Weight:</label>
+    <select id="weight" required>
+      <option value="">--Select--</option>
+    </select>
+    <label>Price (₹)</label>
+    <input type="text" id="price" readonly>
+    <h3>Delivery Details</h3>
+    <label>Name:</label><input type="text" id="name" required>
+    <label>Phone Number:</label><input type="text" id="phone" required>
+    <label>Pincode:</label><input type="text" id="pincode" required>
+    <label>State:</label><input type="text" id="state" required>
+    <label>City:</label><input type="text" id="city" required>
+    <label>House No./Building Name:</label><input type="text" id="house" required>
+    <label>Road Name/Area/Colony:</label><input type="text" id="road" required>
+    <button type="submit">Confirm Order</button>
+  </form>
+  <div class="disclaimer">
+    Orders can be delivered within 20 kilometres from our Farm.
+  </div>
+</div>
+<div class="popup" id="popup">Thank you for your order!</div>
+
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+<script>
+emailjs.init("JhzdlX5bjlVW-QIqG"); // replace with your EmailJS public key
+
+const productWeights = {
+  x: { "200g": "x1", "500g": "x2", "1kg": "x3" },
+  y: { "200g": "y1", "500g": "y2", "1kg": "y3" },
+  z: { "200g": "z1", "500g": "z2", "1kg": "z3" }
+};
+
+const productSelect = document.getElementById('product');
+const weightSelect = document.getElementById('weight');
+const priceInput = document.getElementById('price');
+
+productSelect.addEventListener('change', ()=>{
+  const prod = productSelect.value;
+  weightSelect.innerHTML = '<option value="">--Select--</option>';
+  priceInput.value = '';
+  if(prod){
+    for(const w in productWeights[prod]){
+      const opt = document.createElement('option');
+      opt.value = w;
+      opt.textContent = w;
+      weightSelect.appendChild(opt);
+    }
+  }
+});
+
+weightSelect.addEventListener('change', ()=>{
+  const prod = productSelect.value;
+  const w = weightSelect.value;
+  if(prod && w){
+    priceInput.value = productWeights[prod][w];
+  } else {
+    priceInput.value = '';
+  }
+});
+
+document.getElementById('orderForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  
+  const orderDetails = {
+    product: productSelect.value,
+    weight: weightSelect.value,
+    price: priceInput.value,
+    name: document.getElementById('name').value,
+    phone: document.getElementById('phone').value,
+    pincode: document.getElementById('pincode').value,
+    state: document.getElementById('state').value,
+    city: document.getElementById('city').value,
+    house: document.getElementById('house').value,
+    road: document.getElementById('road').value
+  };
+
+  // Send email via EmailJS
+  emailjs.send("service_wkszo2p","template_0q3atqe", orderDetails)
+  .then(function(response){
+      console.log('SUCCESS!', response.status, response.text);
+  }, function(error){
+      console.log('FAILED...', error);
+  });
+
+  // Show popup
+  const popup = document.getElementById('popup');
+  popup.style.display = 'block';
+  setTimeout(()=>{ popup.style.display = 'none'; }, 2500);
+
+  // Reset form
+  document.getElementById('orderForm').reset();
+  weightSelect.innerHTML = '<option value="">--Select--</option>';
+  priceInput.value = '';
+});
+</script>
+</body>
+</html>
